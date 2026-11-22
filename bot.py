@@ -105,7 +105,7 @@ def main():
     if len(message) <= 2:
         raise RuntimeError("No valid prices found. Message not sent.")
 
-     message.extend([
+    message.extend([
         "🔄 بروزرسانی خودکار",
         "",
         "🛠️ پشتیبانی و ارتباط با ما",
