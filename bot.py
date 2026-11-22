@@ -1,9 +1,9 @@
 
 import os
 import requests
+import jdatetime
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import jdatetime
 TOKEN = os.environ["BOT_TOKEN"]
 CHANNEL = "@goldpricen"
 
