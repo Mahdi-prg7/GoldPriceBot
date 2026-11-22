@@ -4,6 +4,7 @@ import requests
 import jdatetime
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
 TOKEN = os.environ["BOT_TOKEN"]
 CHANNEL = "@goldpricen"
 
@@ -95,7 +96,8 @@ def main():
     ]
 
     now = datetime.now(ZoneInfo("Asia/Tehran"))
-jalali_now = jdatetime.datetime.fromgregorian(datetime=now)
+    jalali_now = jdatetime.datetime.fromgregorian(datetime=now)
+
     message = [
         "📊 قیمت روز بازار",
         f"📅 تاریخ: {jalali_now.strftime('%Y/%m/%d')}",
