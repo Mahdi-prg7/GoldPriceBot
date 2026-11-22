@@ -4,7 +4,7 @@ name: Gold Price Bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/15 6-17 * * *"
 
 jobs:
   run-bot:
