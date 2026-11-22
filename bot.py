@@ -96,12 +96,12 @@ def main():
 
     now = datetime.now(ZoneInfo("Asia/Tehran"))
 
-message = [
-    "📊 قیمت روز بازار",
-    f"📅 تاریخ: {now.strftime('%Y/%m/%d')}",
-    f"🕒 ساعت: {now.strftime('%H:%M')}",
-    ""
-]
+    message = [
+        "📊 قیمت روز بازار",
+        f"📅 تاریخ: {now.strftime('%Y/%m/%d')}",
+        f"🕒 ساعت: {now.strftime('%H:%M')}",
+        ""
+    ]
 
     for title, rows in sections:
         rows = [row for row in rows if row]
@@ -111,7 +111,7 @@ message = [
             message.extend(rows)
             message.append("")
 
-    if len(message) <= 2:
+    if len(message) <= 4:
         raise RuntimeError("No valid prices found. Message not sent.")
 
     message.extend([
