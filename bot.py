@@ -1,6 +1,8 @@
 
 import os
 import requests
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 TOKEN = os.environ["BOT_TOKEN"]
 CHANNEL = "@goldpricen"
@@ -92,7 +94,14 @@ def main():
         ]),
     ]
 
-    message = ["📊 قیمت روز بازار", ""]
+    now = datetime.now(ZoneInfo("Asia/Tehran"))
+
+message = [
+    "📊 قیمت روز بازار",
+    f"📅 تاریخ: {now.strftime('%Y/%m/%d')}",
+    f"🕒 ساعت: {now.strftime('%H:%M')}",
+    ""
+]
 
     for title, rows in sections:
         rows = [row for row in rows if row]
