@@ -98,7 +98,7 @@ def main():
 jalali_now = jdatetime.datetime.fromgregorian(datetime=now)
     message = [
         "📊 قیمت روز بازار",
-        f"📅 تاریخ: {now.strftime('%Y/%m/%d')}",
+        f"📅 تاریخ: {jalali_now.strftime('%Y/%m/%d')}",
         f"🕒 ساعت: {now.strftime('%H:%M')}",
         ""
     ]
