@@ -95,7 +95,7 @@ def main():
     ]
 
     now = datetime.now(ZoneInfo("Asia/Tehran"))
-
+jalali_now = jdatetime.datetime.fromgregorian(datetime=now)
     message = [
         "📊 قیمت روز بازار",
         f"📅 تاریخ: {now.strftime('%Y/%m/%d')}",
