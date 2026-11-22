@@ -109,7 +109,7 @@ def main():
     "🔄 بروزرسانی خودکار",
     "🔗 https://t.me/abshodenoroozi",
     "منبع: nerkhara.com"
-])+
+])
 
     telegram_response = requests.post(
         TELEGRAM_URL,
