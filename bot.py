@@ -105,11 +105,11 @@ def main():
     if len(message) <= 2:
         raise RuntimeError("No valid prices found. Message not sent.")
 
-    message.extend([
-        "⏱ بروزرسانی خودکار هر ۱۵ دقیقه",
-        "⚠️ قیمت‌ها تقریبی هستند و ملاک معامله نیستند.",
-        "منبع: nerkhara.com"
-    ])
+  message.extend([
+    "🔄 بروزرسانی خودکار",
+    "🔗 https://t.me/abshodenoroozi",
+    "منبع: nerkhara.com"
+])+
 
     telegram_response = requests.post(
         TELEGRAM_URL,
