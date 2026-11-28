@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 TOKEN = os.environ["BOT_TOKEN"]
-CHANNEL = "@goldpricen"
+CHANNEL = "@abshodenoroozi"
 
 API_URL = "https://nerkhara.com/api/v1/latest.json"
 TELEGRAM_URL = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -46,15 +46,15 @@ def get_gold_market_status(item=None):
     weekday = now_ny.weekday()
     current_time = now_ny.time()
 
-    # شنبه: بازار بسته است
+    # Saturday: market closed
     if weekday == 5:
         return " (بسته)"
 
-    # جمعه از ساعت 17 نیویورک
+    # Friday after 17:00 New York
     if weekday == 4 and current_time.hour >= 17:
         return " (بسته)"
 
-    # یکشنبه تا ساعت 18 نیویورک
+    # Sunday before 18:00 New York
     if weekday == 6 and current_time.hour < 18:
         return " (بسته)"
 
@@ -117,13 +117,13 @@ def main():
     ounce_item = get_item("xau")
     ounce = ounce_item.get("price") if ounce_item else None
 
-    # محاسبه طلای 24 عیار از روی طلای 18 عیار
+    # Calculate 24k gold from 18k
     gold24 = None
 
     if gold18 is not None and float(gold18) > 0:
         gold24 = float(gold18) * 999 / 750
 
-    # محاسبه قیمت نظری هر گرم طلای 18 عیار
+    # Calculate theoretical 18k price per gram
     theoretical_gold18 = None
 
     if (
@@ -137,7 +137,7 @@ def main():
             / (OUNCE_GRAMS * 999)
         )
 
-    # محاسبه حباب مثبت یا منفی
+    # Calculate positive or negative bubble
     bubble = None
     bubble_percent = None
 
@@ -149,7 +149,7 @@ def main():
         bubble = float(gold18) - theoretical_gold18
         bubble_percent = bubble / theoretical_gold18 * 100
 
-    # تاریخ و ساعت ایران
+    # Iran date and time
     now = datetime.now(ZoneInfo("Asia/Tehran"))
     jalali_now = jdatetime.datetime.fromgregorian(datetime=now)
 
@@ -161,12 +161,10 @@ def main():
         "🥇 طلا",
     ]
 
-    # طلای 18 عیار
     line18 = make_line("gold-18k", "طلای ۱۸ عیار")
     if line18:
         message.append(line18)
 
-    # طلای 24 عیار محاسبه‌شده
     formatted24 = format_price(gold24)
 
     if formatted24:
@@ -174,7 +172,6 @@ def main():
             f"طلای ۲۴ عیار: {formatted24} تومان"
         )
 
-    # مظنه داخلی 17
     line_mesghal = make_line(
         "gold-mesghal",
         "مظنه داخلی ۱۷"
@@ -183,7 +180,7 @@ def main():
     if line_mesghal:
         message.append(line_mesghal)
 
-    # اونس جهانی و وضعیت بازار
+    # Global ounce and market status
     if ounce is not None:
         formatted_ounce = f"{float(ounce):,.2f}"
         status = get_gold_market_status(ounce_item)
@@ -192,7 +189,7 @@ def main():
             f"اونس جهانی: {formatted_ounce} دلار{status}"
         )
 
-    # حباب طلا
+    # Gold bubble
     if bubble is not None:
         bubble_text = f"{abs(bubble):,.0f}"
         bubble_percent_text = f"{abs(bubble_percent):.2f}%"
@@ -237,10 +234,11 @@ def main():
         "",
         "قیمت‌ها حدودی بوده و ملاک معاملات نیستند.",
         "",
+        "🛠️ پشتیبانی و ارتباط با ما",
         "@abshodenoroozi",
     ])
 
-    # ارسال پیام به کانال
+    # Send message to new channel
     telegram_response = requests.post(
         TELEGRAM_URL,
         data={
