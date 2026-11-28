@@ -42,26 +42,48 @@ def format_change(value):
 
 def get_gold_market_status(item=None):
     now_ny = datetime.now(ZoneInfo("America/New_York"))
-
     weekday = now_ny.weekday()
     current_time = now_ny.time()
 
-    # Saturday: market closed
     if weekday == 5:
         return " (بسته)"
 
-    # Friday after 17:00 New York
     if weekday == 4 and current_time.hour >= 17:
         return " (بسته)"
 
-    # Sunday before 18:00 New York
     if weekday == 6 and current_time.hour < 18:
         return " (بسته)"
 
     return ""
 
 
+def price_line(item_id, title):
+    item = ITEMS.get(item_id)
+
+    if not item or item.get("stale") is True:
+        return None
+
+    price = item.get("price_irt")
+    if price is None:
+        price = item.get("price")
+
+    formatted = format_price(price)
+
+    if formatted is None:
+        return None
+
+    return (
+        f"{title}: <b>{formatted} تومان</b>  "
+        f"{format_change(item.get('change_pct'))}"
+    )
+
+
+ITEMS = {}
+
+
 def main():
+    global ITEMS
+
     response = requests.get(API_URL, timeout=25)
     response.raise_for_status()
 
@@ -70,13 +92,13 @@ def main():
     if data.get("stale") is True:
         raise RuntimeError("API data is stale. Message not sent.")
 
-    items = {
+    ITEMS = {
         item["id"]: item
         for item in data.get("items", [])
     }
 
     def get_item(item_id):
-        item = items.get(item_id)
+        item = ITEMS.get(item_id)
 
         if not item or item.get("stale") is True:
             return None
@@ -89,27 +111,11 @@ def main():
         if not item:
             return None
 
-        return item.get("price_irt") or item.get("price")
-
-    def make_line(item_id, title):
-        item = get_item(item_id)
-
-        if not item:
-            return None
-
         price = item.get("price_irt")
         if price is None:
             price = item.get("price")
 
-        formatted = format_price(price)
-
-        if formatted is None:
-            return None
-
-        return (
-            f"{title}: {formatted} تومان"
-            f" | {format_change(item.get('change_pct'))}"
-        )
+        return price
 
     gold18 = get_price("gold-18k")
     usd = get_price("usd")
@@ -117,13 +123,13 @@ def main():
     ounce_item = get_item("xau")
     ounce = ounce_item.get("price") if ounce_item else None
 
-    # Calculate 24k gold from 18k
+    # محاسبه طلای 24 عیار از طلای 18 عیار
     gold24 = None
 
     if gold18 is not None and float(gold18) > 0:
         gold24 = float(gold18) * 999 / 750
 
-    # Calculate theoretical 18k price per gram
+    # محاسبه قیمت نظری طلای 18 عیار از اونس جهانی
     theoretical_gold18 = None
 
     if (
@@ -137,7 +143,7 @@ def main():
             / (OUNCE_GRAMS * 999)
         )
 
-    # Calculate positive or negative bubble
+    # محاسبه حباب مثبت یا منفی
     bubble = None
     bubble_percent = None
 
@@ -149,101 +155,120 @@ def main():
         bubble = float(gold18) - theoretical_gold18
         bubble_percent = bubble / theoretical_gold18 * 100
 
-    # Iran date and time
+    # تاریخ و ساعت ایران
     now = datetime.now(ZoneInfo("Asia/Tehran"))
     jalali_now = jdatetime.datetime.fromgregorian(datetime=now)
 
+    date_text = jalali_now.strftime("%Y/%m/%d")
+    time_text = now.strftime("%H:%M")
+
     message = [
-        "📊 قیمت روز بازار",
-        f"📅 تاریخ: {jalali_now.strftime('%Y/%m/%d')}",
-        f"🕒 ساعت: {now.strftime('%H:%M')}",
+        "📊 <b>گزارش لحظه‌ای بازار</b>",
+        "<b>قیمت طلا و ارز</b>",
+        f"📅 {date_text}  |  🕒 {time_text}",
         "",
-        "🥇 طلا",
+        "━━━━━━━━━━━━━━",
+        "🥇 <b>بازار طلا</b>",
+        "━━━━━━━━━━━━━━",
     ]
 
-    line18 = make_line("gold-18k", "طلای ۱۸ عیار")
+    # طلای 18 عیار
+    line18 = price_line("gold-18k", "طلای ۱۸ عیار")
     if line18:
         message.append(line18)
 
+    # طلای 24 عیار محاسبه‌شده
     formatted24 = format_price(gold24)
-
     if formatted24:
         message.append(
-            f"طلای ۲۴ عیار: {formatted24} تومان"
+            f"طلای ۲۴ عیار: <b>{formatted24} تومان</b>"
         )
 
-    line_mesghal = make_line(
+    # مظنه داخلی 17
+    mesghal_line = price_line(
         "gold-mesghal",
         "مظنه داخلی ۱۷"
     )
+    if mesghal_line:
+        message.append(mesghal_line)
 
-    if line_mesghal:
-        message.append(line_mesghal)
-
-    # Global ounce and market status
+    # اونس جهانی
     if ounce is not None:
         formatted_ounce = f"{float(ounce):,.2f}"
         status = get_gold_market_status(ounce_item)
 
         message.append(
-            f"اونس جهانی: {formatted_ounce} دلار{status}"
+            f"اونس جهانی: <b>{formatted_ounce} دلار</b>{status}"
         )
 
-    # Gold bubble
+    # حباب طلا
     if bubble is not None:
         bubble_text = f"{abs(bubble):,.0f}"
-        bubble_percent_text = f"{abs(bubble_percent):.2f}%"
+        percent_text = f"{abs(bubble_percent):.2f}%"
 
         if bubble > 0:
             message.append(
-                f"حباب طلا: مثبت {bubble_text} تومان "
-                f"(+{bubble_percent_text})"
+                f"📈 حباب طلا: <b>مثبت {bubble_text} تومان "
+                f"(+{percent_text})</b>"
             )
         elif bubble < 0:
             message.append(
-                f"حباب طلا: منفی {bubble_text} تومان "
-                f"(-{bubble_percent_text})"
+                f"📉 حباب طلا: <b>منفی {bubble_text} تومان "
+                f"(-{percent_text})</b>"
             )
         else:
-            message.append("حباب طلا: صفر")
+            message.append("حباب طلا: <b>صفر</b>")
 
-    message.append("")
-    message.append("🪙 سکه")
+    # بخش سکه
+    message.extend([
+        "",
+        "━━━━━━━━━━━━━━",
+        "🪙 <b>بازار سکه</b>",
+        "━━━━━━━━━━━━━━",
+    ])
 
     coin_lines = [
-        make_line("coin-emami", "سکه امامی"),
-        make_line("coin-bahar-azadi", "سکه بهار آزادی"),
-        make_line("coin-half", "نیم سکه"),
-        make_line("coin-quarter", "ربع سکه"),
-        make_line("coin-gram", "سکه گرمی"),
+        price_line("coin-emami", "سکه امامی"),
+        price_line("coin-bahar-azadi", "سکه بهار آزادی"),
+        price_line("coin-half", "نیم سکه"),
+        price_line("coin-quarter", "ربع سکه"),
+        price_line("coin-gram", "سکه گرمی"),
     ]
 
     message.extend(line for line in coin_lines if line)
 
-    message.append("")
-    message.append("💵 ارز")
+    # بخش ارز
+    message.extend([
+        "",
+        "━━━━━━━━━━━━━━",
+        "💱 <b>بازار ارز</b>",
+        "━━━━━━━━━━━━━━",
+    ])
 
     currency_lines = [
-        make_line("usd", "دلار"),
-        make_line("eur", "یورو"),
+        price_line("usd", "دلار"),
+        price_line("eur", "یورو"),
     ]
 
     message.extend(line for line in currency_lines if line)
 
+    # پایین پیام
     message.extend([
         "",
-        "قیمت‌ها حدودی بوده و ملاک معاملات نیستند.",
+        "━━━━━━━━━━━━━━",
+        "⚠️ <i>قیمت‌ها حدودی بوده و ملاک معاملات نیستند.</i>",
         "",
-        "🛠️ پشتیبانی و ارتباط با ما",
+        "🛠️ <b>پشتیبانی و ارتباط با ما</b>",
         "@abshodenoroozi",
     ])
 
-    # Send message to new channel
+    # ارسال به کانال
     telegram_response = requests.post(
         TELEGRAM_URL,
         data={
             "chat_id": CHANNEL,
-            "text": "\n".join(message)
+            "text": "\n".join(message),
+            "parse_mode": "HTML"
         },
         timeout=25
     )
